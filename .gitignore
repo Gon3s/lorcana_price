@@ -25,7 +25,21 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+.ruff_cache/
 
 # IDE
 .vscode/
 .idea/
+
+# Virtual Environment
+venv/
+.venv/
+
+# Logs
+*.log
+
+# Tests
+.pytest_cache/
+
+# Other
+downloaded_files/

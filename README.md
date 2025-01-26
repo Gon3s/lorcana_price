@@ -38,7 +38,10 @@ Le Google Sheet doit contenir les colonnes suivantes :
 - Price : Prix normal en euros
 - Foil Price : Prix foil en euros
 - Cardmarket URL : URL relative de la carte sur Cardmarket
-- (colonne vide)
+- Current Price : Prix actuel sur Cardmarket
+- Trend Price : Prix tendance sur Cardmarket
+- Avg 30 Days : Prix moyen sur 30 jours
+- Available Items : Nombre d'articles disponibles
 - Vinted URL : URL relative de la carte sur Vinted
 
 ## Utilisation
@@ -51,7 +54,7 @@ python src/main.py
 - [x] Configuration du projet
 - [x] Documentation détaillée
 - [x] Lecture des données depuis Google Sheets
-- [ ] Scraping des prix Cardmarket
+- [x] Scraping des prix Cardmarket
 - [ ] Scraping des prix Vinted
 - [ ] Scraping des prix Ebay
 - [ ] Scraping des prix Leboncoin

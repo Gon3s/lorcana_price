@@ -5,12 +5,14 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import Optional
 
+from models.price_info import PriceInfo
+
 # Constantes pour les colonnes et l'API
 SHEET_NAME = "data"  # Modification du nom de la feuille
-RANGE = "A2:K"  # A partir de A2 pour ignorer l'en-tête
+RANGE = "A2:N"  # Mise à jour du range pour inclure les nouvelles colonnes
 SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets.readonly"
-]  # Déplacé ici avec les autres constantes
+    "https://www.googleapis.com/auth/spreadsheets"
+]  # Modification pour autoriser l'écriture
 
 # Indices des colonnes dans le Google Sheet
 COL_NAME_EN = 0
@@ -22,8 +24,11 @@ COL_RARITY = 5
 COL_PRICE = 6
 COL_FOIL_PRICE = 7
 COL_CARDMARKET_URL = 8
-COL_COL9 = 9  # Colonne vide dans le CSV
-COL_VINTED_URL = 10
+COL_CURRENT_PRICE = 9
+COL_TREND_PRICE = 10
+COL_AVG_30_DAYS = 11
+COL_AVAILABLE_ITEMS = 12
+COL_VINTED_URL = 13
 
 
 class Card(BaseModel):
@@ -36,7 +41,11 @@ class Card(BaseModel):
     price: Optional[float]
     foil_price: Optional[float]
     cardmarket_url: str
-    vinted_url: str
+    current_price: Optional[float]
+    trend_price: Optional[float]
+    avg_30_days: Optional[float]
+    available_items: Optional[int]
+    vinted_url: Optional[str]
 
     model_config = {
         "json_schema_extra": {
@@ -110,20 +119,61 @@ def get_cards_to_track() -> list[Card]:
     cards = []
 
     for row in values:
-        if len(row) >= 11:  # S'assurer que nous avons toutes les colonnes
-            cards.append(
-                Card(
-                    name_en=row[COL_NAME_EN],
-                    name_fr=row[COL_NAME_FR],
-                    set_number=row[COL_SET],
-                    card_number=row[COL_NUMBER],
-                    color=row[COL_COLOR],
-                    rarity=row[COL_RARITY],
-                    price=parse_price(row[COL_PRICE]),
-                    foil_price=parse_price(row[COL_FOIL_PRICE]),
-                    cardmarket_url=row[COL_CARDMARKET_URL],
-                    vinted_url=row[COL_VINTED_URL],
-                )
-            )
+        card_data = {
+            "name_en": row[COL_NAME_EN],
+            "name_fr": row[COL_NAME_FR],
+            "set_number": row[COL_SET],
+            "card_number": row[COL_NUMBER],
+            "color": row[COL_COLOR],
+            "rarity": row[COL_RARITY],
+            "price": parse_price(row[COL_PRICE]),
+            "foil_price": parse_price(row[COL_FOIL_PRICE]),
+            "cardmarket_url": row[COL_CARDMARKET_URL],
+            "current_price": parse_price(row[COL_CURRENT_PRICE])
+            if len(row) > COL_CURRENT_PRICE
+            else None,
+            "trend_price": parse_price(row[COL_TREND_PRICE])
+            if len(row) > COL_TREND_PRICE
+            else None,
+            "avg_30_days": parse_price(row[COL_AVG_30_DAYS])
+            if len(row) > COL_AVG_30_DAYS
+            else None,
+            "available_items": int(row[COL_AVAILABLE_ITEMS])
+            if len(row) > COL_AVAILABLE_ITEMS and row[COL_AVAILABLE_ITEMS]
+            else None,
+            "vinted_url": row[COL_VINTED_URL] if len(row) > COL_VINTED_URL else None,
+        }
+        cards.append(Card(**card_data))
 
     return cards
+
+
+def update_card_prices(service, row: int, price_info: PriceInfo):
+    """Met à jour les prix d'une carte dans le Google Sheet"""
+    try:
+        load_dotenv()
+        sheets_url = os.getenv("GOOGLE_SHEETS_URL")
+        sheet_id = get_sheet_id_from_url(sheets_url)
+
+        # Préparation des données à mettre à jour dans le format attendu par l'API
+        values = [
+            [
+                price_info.current_price,
+                price_info.trend_price,
+                price_info.avg_30_days,
+                price_info.available_items,
+            ]
+        ]
+
+        # Construction du range pour la mise à jour (ex: "J2:M2" pour la ligne 2)
+        range_name = f"{SHEET_NAME}!J{row}:M{row}"
+
+        body = {"values": values}
+
+        # Appel de l'API pour mettre à jour les cellules
+        service.spreadsheets().values().update(
+            spreadsheetId=sheet_id, range=range_name, valueInputOption="RAW", body=body
+        ).execute()
+
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour des prix dans le sheet: {e}")

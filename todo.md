@@ -4,8 +4,8 @@
 * [DONE] Ajouter la documentation initiale
 * [DONE] Documentation de la configuration Google Sheets
 * [DONE] Configuration Git du projet
+* [DONE] Implémentation du scraping Cardmarket
 * [NEXT] Implémentation du scraping :
-    - Récupérer le prix Cardmarket
     - Récupérer le prix Vinted
     - Récupérer le prix Ebay
     - Récupérer le prix Leboncoin

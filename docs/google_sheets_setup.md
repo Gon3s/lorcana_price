@@ -36,15 +36,15 @@
 1. Créer une nouvelle feuille Google Sheets
 2. Structurer les colonnes comme suit :
    ```
-   | Name (EN) | Name (FR) | Set | Card Number | Color | Rarity | Price | Foil Price | Cardmarket URL | - | Vinted URL |
-   |-----------|-----------|-----|-------------|--------|---------|--------|------------|----------------|---|------------|
-   | Maui...   | Maui...   | 6   | 124        | Ruby   | Legend. | 38,32 €| 45,62 €    | cardmarket/... | - | vinted/... |
+   | Name (EN) | Name (FR) | Set | Card Number | Color | Rarity | Price | Foil Price | Cardmarket URL | Current Price | Trend Price | Avg 30 Days | Available Items | Vinted URL |
+   |-----------|-----------|-----|-------------|--------|---------|--------|------------|----------------|---------------|-------------|-------------|-----------------|------------|
+   | Maui...   | Maui...   | 6   | 124        | Ruby   | Legend. | 38,32 €| 45,62 €    | cardmarket/... | 35,00 €      | 37,50 €    | 36,75 €     | 42             | vinted/... |
    ```
    Notes sur les colonnes :
    - Les noms doivent être exactement comme indiqué
    - Les prix sont au format européen (virgule comme séparateur décimal)
-   - La colonne vide entre Cardmarket et Vinted doit être présente
    - Les URLs sont des chemins relatifs
+   - Les colonnes de prix Cardmarket sont automatiquement mises à jour par le script
 3. Cliquer sur "Share" (bouton en haut à droite)
 4. Ajouter l'email du compte de service avec accès "Viewer"
    - L'email est au format : `name@project-id.iam.gserviceaccount.com`
