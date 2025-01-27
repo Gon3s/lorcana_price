@@ -2,7 +2,7 @@ from seleniumbase import SB
 from bs4 import BeautifulSoup
 from models.price_info import PriceInfo
 from typing import Optional
-import time
+from datetime import datetime
 
 
 def parse_price_info(html_content: str) -> Optional[PriceInfo]:
@@ -47,6 +47,8 @@ def parse_price_info(html_content: str) -> Optional[PriceInfo]:
                 "trend_price": trend_price,
                 "avg_30_days": avg_30_days,
                 "available_items": available_items,
+                "min_price": current_price,  # Initialisation du prix minimum
+                "last_update": datetime.now(),
             }
         )
     except Exception as e:
@@ -60,7 +62,6 @@ def get_cardmarket_price(card_url: str) -> Optional[PriceInfo]:
         try:
             full_url = f"https://www.cardmarket.com{card_url}"
             sb.open(full_url)
-            time.sleep(2)  # Attente du chargement initial
 
             # Attendre que les infos soient chargées
             sb.wait_for_element("div.info-list-container", timeout=10)

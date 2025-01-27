@@ -42,7 +42,8 @@ Le Google Sheet doit contenir les colonnes suivantes :
 - Trend Price : Prix tendance sur Cardmarket
 - Avg 30 Days : Prix moyen sur 30 jours
 - Available Items : Nombre d'articles disponibles
-- Vinted URL : URL relative de la carte sur Vinted
+- Min Price : Prix minimum observé
+- Last Update : Date de dernière mise à jour
 
 ## Utilisation
 
@@ -55,7 +56,11 @@ python src/main.py
 - [x] Documentation détaillée
 - [x] Lecture des données depuis Google Sheets
 - [x] Scraping des prix Cardmarket
-- [ ] Scraping des prix Vinted
+- [x] Suivi historique des prix
+  - Enregistrement du prix minimum observé
+  - Date de dernière mise à jour des prix
+  - Mise à jour uniquement si le nouveau prix est inférieur
 - [ ] Scraping des prix Ebay
 - [ ] Scraping des prix Leboncoin
+- [ ] Scraping des prix Vinted
 - [ ] Système d'alertes de prix

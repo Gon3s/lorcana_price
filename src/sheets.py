@@ -4,12 +4,13 @@ from googleapiclient.discovery import build
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import Optional
+from datetime import datetime
 
 from models.price_info import PriceInfo
 
 # Constantes pour les colonnes et l'API
 SHEET_NAME = "data"  # Modification du nom de la feuille
-RANGE = "A2:N"  # Mise à jour du range pour inclure les nouvelles colonnes
+RANGE = "A2:O"  # Mise à jour du range pour retirer la colonne Vinted
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets"
 ]  # Modification pour autoriser l'écriture
@@ -28,7 +29,8 @@ COL_CURRENT_PRICE = 9
 COL_TREND_PRICE = 10
 COL_AVG_30_DAYS = 11
 COL_AVAILABLE_ITEMS = 12
-COL_VINTED_URL = 13
+COL_MIN_PRICE = 13
+COL_LAST_UPDATE = 14
 
 
 class Card(BaseModel):
@@ -45,7 +47,6 @@ class Card(BaseModel):
     trend_price: Optional[float]
     avg_30_days: Optional[float]
     available_items: Optional[int]
-    vinted_url: Optional[str]
 
     model_config = {
         "json_schema_extra": {
@@ -60,7 +61,6 @@ class Card(BaseModel):
                     "price": 38.32,
                     "foil_price": 45.62,
                     "cardmarket_url": "cardmarket/Maui - Half-Shark",
-                    "vinted_url": "vinted/Maui - Demi-requin",
                 }
             ]
         }
@@ -141,7 +141,6 @@ def get_cards_to_track() -> list[Card]:
             "available_items": int(row[COL_AVAILABLE_ITEMS])
             if len(row) > COL_AVAILABLE_ITEMS and row[COL_AVAILABLE_ITEMS]
             else None,
-            "vinted_url": row[COL_VINTED_URL] if len(row) > COL_VINTED_URL else None,
         }
         cards.append(Card(**card_data))
 
@@ -155,22 +154,43 @@ def update_card_prices(service, row: int, price_info: PriceInfo):
         sheets_url = os.getenv("GOOGLE_SHEETS_URL")
         sheet_id = get_sheet_id_from_url(sheets_url)
 
-        # Préparation des données à mettre à jour dans le format attendu par l'API
+        # Récupérer le prix minimum actuel
+        range_name = f"{SHEET_NAME}!O{row}"
+        result = (
+            service.spreadsheets()
+            .values()
+            .get(spreadsheetId=sheet_id, range=range_name)
+            .execute()
+        )
+        current_min = (
+            float(result.get("values", [[0]])[0][0])
+            if result.get("values")
+            else float("inf")
+        )
+
+        # Mettre à jour le prix minimum si nécessaire
+        new_min = (
+            min(current_min, price_info.current_price)
+            if current_min != 0
+            else price_info.current_price
+        )
+
+        # Préparation des données
         values = [
             [
                 price_info.current_price,
                 price_info.trend_price,
                 price_info.avg_30_days,
                 price_info.available_items,
+                new_min,
+                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             ]
         ]
 
-        # Construction du range pour la mise à jour (ex: "J2:M2" pour la ligne 2)
-        range_name = f"{SHEET_NAME}!J{row}:M{row}"
+        # Construction du range pour la mise à jour
+        range_name = f"{SHEET_NAME}!J{row}:O{row}"
 
         body = {"values": values}
-
-        # Appel de l'API pour mettre à jour les cellules
         service.spreadsheets().values().update(
             spreadsheetId=sheet_id, range=range_name, valueInputOption="RAW", body=body
         ).execute()

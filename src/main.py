@@ -40,9 +40,6 @@ def main():
                     else:
                         print(f"Erreur finale : {e}")
 
-            # Pause entre chaque carte pour éviter les limitations
-            time.sleep(3)
-
     except Exception as e:
         print(f"Erreur générale : {e}")
 
