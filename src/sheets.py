@@ -5,15 +5,14 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from typing import Optional
 from datetime import datetime
+import pytz
 
 from models.price_info import PriceInfo
 
 # Constantes pour les colonnes et l'API
-SHEET_NAME = "data"  # Modification du nom de la feuille
-RANGE = "A2:O"  # Mise à jour du range pour retirer la colonne Vinted
-SCOPES = [
-    "https://www.googleapis.com/auth/spreadsheets"
-]  # Modification pour autoriser l'écriture
+SHEET_NAME = "data"
+RANGE = "A2:O"
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 # Indices des colonnes dans le Google Sheet
 COL_NAME_EN = 0
@@ -31,6 +30,10 @@ COL_AVG_30_DAYS = 11
 COL_AVAILABLE_ITEMS = 12
 COL_MIN_PRICE = 13
 COL_LAST_UPDATE = 14
+
+# Cache des services
+_sheets_service = None
+_sheet_id = None
 
 
 class Card(BaseModel):
@@ -68,6 +71,10 @@ class Card(BaseModel):
 
 
 def get_google_sheets_service():
+    global _sheets_service
+    if _sheets_service is not None:
+        return _sheets_service
+
     credentials_file = os.getenv(
         "GOOGLE_SHEETS_CREDENTIALS_FILE", "service-account.json"
     )
@@ -80,38 +87,51 @@ def get_google_sheets_service():
 
     credentials = service_account.Credentials.from_service_account_file(
         credentials_file,
-        scopes=SCOPES,  # Utilisation de SCOPES ici
+        scopes=SCOPES,
     )
 
-    return build("sheets", "v4", credentials=credentials)
+    _sheets_service = build("sheets", "v4", credentials=credentials)
+    return _sheets_service
 
 
-def get_sheet_id_from_url(url: str) -> str:
-    return url.split("/")[5]
+def get_sheet_id():
+    global _sheet_id
+    if _sheet_id is not None:
+        return _sheet_id
 
-
-def parse_price(price_str: str) -> Optional[float]:
-    try:
-        return (
-            float(price_str.replace(" €", "").replace(",", ".")) if price_str else None
-        )
-    except ValueError:
-        return None
-
-
-def get_cards_to_track() -> list[Card]:
     load_dotenv()
     sheets_url = os.getenv("GOOGLE_SHEETS_URL")
     if not sheets_url:
         raise ValueError("GOOGLE_SHEETS_URL not found in .env")
+    _sheet_id = sheets_url.split("/")[5]
+    return _sheet_id
 
+
+def parse_value(value) -> Optional[float]:
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        try:
+            return float(value.replace(" €", "").replace(",", "."))
+        except ValueError:
+            return None
+    return None
+
+
+def get_cards_to_track() -> list[Card]:
     service = get_google_sheets_service()
-    sheet_id = get_sheet_id_from_url(sheets_url)
+    sheet_id = get_sheet_id()
 
     result = (
         service.spreadsheets()
         .values()
-        .get(spreadsheetId=sheet_id, range=f"{SHEET_NAME}!{RANGE}")
+        .get(
+            spreadsheetId=sheet_id,
+            range=f"{SHEET_NAME}!{RANGE}",
+            valueRenderOption="UNFORMATTED_VALUE",
+        )
         .execute()
     )
 
@@ -120,22 +140,22 @@ def get_cards_to_track() -> list[Card]:
 
     for row in values:
         card_data = {
-            "name_en": row[COL_NAME_EN],
-            "name_fr": row[COL_NAME_FR],
-            "set_number": row[COL_SET],
-            "card_number": row[COL_NUMBER],
-            "color": row[COL_COLOR],
-            "rarity": row[COL_RARITY],
-            "price": parse_price(row[COL_PRICE]),
-            "foil_price": parse_price(row[COL_FOIL_PRICE]),
-            "cardmarket_url": row[COL_CARDMARKET_URL],
-            "current_price": parse_price(row[COL_CURRENT_PRICE])
+            "name_en": str(row[COL_NAME_EN]),
+            "name_fr": str(row[COL_NAME_FR]),
+            "set_number": str(row[COL_SET]),
+            "card_number": str(row[COL_NUMBER]),
+            "color": str(row[COL_COLOR]),
+            "rarity": str(row[COL_RARITY]),
+            "price": parse_value(row[COL_PRICE]),
+            "foil_price": parse_value(row[COL_FOIL_PRICE]),
+            "cardmarket_url": str(row[COL_CARDMARKET_URL]),
+            "current_price": parse_value(row[COL_CURRENT_PRICE])
             if len(row) > COL_CURRENT_PRICE
             else None,
-            "trend_price": parse_price(row[COL_TREND_PRICE])
+            "trend_price": parse_value(row[COL_TREND_PRICE])
             if len(row) > COL_TREND_PRICE
             else None,
-            "avg_30_days": parse_price(row[COL_AVG_30_DAYS])
+            "avg_30_days": parse_value(row[COL_AVG_30_DAYS])
             if len(row) > COL_AVG_30_DAYS
             else None,
             "available_items": int(row[COL_AVAILABLE_ITEMS])
@@ -148,51 +168,58 @@ def get_cards_to_track() -> list[Card]:
 
 
 def update_card_prices(service, row: int, price_info: PriceInfo):
-    """Met à jour les prix d'une carte dans le Google Sheet"""
     try:
-        load_dotenv()
-        sheets_url = os.getenv("GOOGLE_SHEETS_URL")
-        sheet_id = get_sheet_id_from_url(sheets_url)
+        sheet_id = get_sheet_id()
 
-        # Récupérer le prix minimum actuel
-        range_name = f"{SHEET_NAME}!O{row}"
-        result = (
+        ranges = [
+            f"{SHEET_NAME}!N{row}",
+        ]
+        batch_result = (
             service.spreadsheets()
             .values()
-            .get(spreadsheetId=sheet_id, range=range_name)
+            .batchGet(spreadsheetId=sheet_id, ranges=ranges)
             .execute()
         )
-        current_min = (
-            float(result.get("values", [[0]])[0][0])
-            if result.get("values")
-            else float("inf")
-        )
 
-        # Mettre à jour le prix minimum si nécessaire
+        value_ranges = batch_result.get("valueRanges", [])
+        current_min = float("inf")
+        if value_ranges and value_ranges[0].get("values"):
+            try:
+                value = value_ranges[0]["values"][0][0]
+                if value and str(value).strip():
+                    current_min = float(value)
+            except (ValueError, IndexError):
+                current_min = float("inf")
+
         new_min = (
             min(current_min, price_info.current_price)
             if current_min != 0
             else price_info.current_price
         )
 
-        # Préparation des données
-        values = [
-            [
-                price_info.current_price,
-                price_info.trend_price,
-                price_info.avg_30_days,
-                price_info.available_items,
-                new_min,
-                datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            ]
+        paris_tz = pytz.timezone("Europe/Paris")
+        current_time = datetime.now(paris_tz).strftime("%d/%m/%Y %H:%M:%S")
+
+        data = [
+            {
+                "range": f"{SHEET_NAME}!J{row}:O{row}",
+                "values": [
+                    [
+                        price_info.current_price,
+                        price_info.trend_price,
+                        price_info.avg_30_days,
+                        price_info.available_items,
+                        new_min,
+                        current_time,
+                    ]
+                ],
+            }
         ]
 
-        # Construction du range pour la mise à jour
-        range_name = f"{SHEET_NAME}!J{row}:O{row}"
+        body = {"valueInputOption": "RAW", "data": data}
 
-        body = {"values": values}
-        service.spreadsheets().values().update(
-            spreadsheetId=sheet_id, range=range_name, valueInputOption="RAW", body=body
+        service.spreadsheets().values().batchUpdate(
+            spreadsheetId=sheet_id, body=body
         ).execute()
 
     except Exception as e:
