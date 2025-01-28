@@ -48,7 +48,26 @@ Le Google Sheet doit contenir les colonnes suivantes :
 ## Utilisation
 
 ```bash
+python src/main.py [options]
+```
+
+### Options
+
+- `-s`, `--sheet-name` : Nom de l'onglet dans le Google Sheet (défaut: data)
+- `-r`, `--retries` : Nombre maximum de tentatives par carte (défaut: 3)
+- `-d`, `--delay` : Délai entre les tentatives en secondes (défaut: 2)
+
+### Exemples
+
+```bash
+# Utilisation avec les valeurs par défaut
 python src/main.py
+
+# Spécifier un autre onglet
+python src/main.py --sheet-name "prix"
+
+# Augmenter le nombre de tentatives et le délai
+python src/main.py --retries 5 --delay 3
 ```
 
 ## Fonctionnalités

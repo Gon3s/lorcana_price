@@ -1,8 +1,6 @@
-import os
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from pydantic import BaseModel
-from dotenv import load_dotenv
 from typing import Optional
 from datetime import datetime
 import pytz
@@ -10,7 +8,6 @@ import pytz
 from models.price_info import PriceInfo
 
 # Constantes pour les colonnes et l'API
-SHEET_NAME = "data"
 RANGE = "A2:O"
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -30,10 +27,6 @@ COL_AVG_30_DAYS = 11
 COL_AVAILABLE_ITEMS = 12
 COL_MIN_PRICE = 13
 COL_LAST_UPDATE = 14
-
-# Cache des services
-_sheets_service = None
-_sheet_id = None
 
 
 class Card(BaseModel):
@@ -70,41 +63,18 @@ class Card(BaseModel):
     }
 
 
-def get_google_sheets_service():
-    global _sheets_service
-    if _sheets_service is not None:
-        return _sheets_service
-
-    credentials_file = os.getenv(
-        "GOOGLE_SHEETS_CREDENTIALS_FILE", "service-account.json"
-    )
-
-    if not os.path.exists(credentials_file):
-        raise FileNotFoundError(
-            f"Credentials file '{credentials_file}' not found. "
-            "Please follow the setup instructions in docs/google_sheets_setup.md"
-        )
-
+def get_google_sheets_service(credentials_file: str = "service-account.json"):
     credentials = service_account.Credentials.from_service_account_file(
         credentials_file,
         scopes=SCOPES,
     )
-
-    _sheets_service = build("sheets", "v4", credentials=credentials)
-    return _sheets_service
+    return build("sheets", "v4", credentials=credentials)
 
 
-def get_sheet_id():
-    global _sheet_id
-    if _sheet_id is not None:
-        return _sheet_id
-
-    load_dotenv()
-    sheets_url = os.getenv("GOOGLE_SHEETS_URL")
+def get_sheet_id(sheets_url: str) -> str:
     if not sheets_url:
-        raise ValueError("GOOGLE_SHEETS_URL not found in .env")
-    _sheet_id = sheets_url.split("/")[5]
-    return _sheet_id
+        raise ValueError("GOOGLE_SHEETS_URL is required")
+    return sheets_url.split("/")[5]
 
 
 def parse_value(value) -> Optional[float]:
@@ -120,16 +90,13 @@ def parse_value(value) -> Optional[float]:
     return None
 
 
-def get_cards_to_track() -> list[Card]:
-    service = get_google_sheets_service()
-    sheet_id = get_sheet_id()
-
+def get_cards_to_track(service, sheet_id: str, sheet_name: str = "data") -> list[Card]:
     result = (
         service.spreadsheets()
         .values()
         .get(
             spreadsheetId=sheet_id,
-            range=f"{SHEET_NAME}!{RANGE}",
+            range=f"{sheet_name}!{RANGE}",
             valueRenderOption="UNFORMATTED_VALUE",
         )
         .execute()
@@ -167,12 +134,12 @@ def get_cards_to_track() -> list[Card]:
     return cards
 
 
-def update_card_prices(service, row: int, price_info: PriceInfo):
+def update_card_prices(
+    service, sheet_id: str, sheet_name: str, row: int, price_info: PriceInfo
+):
     try:
-        sheet_id = get_sheet_id()
-
         ranges = [
-            f"{SHEET_NAME}!N{row}",
+            f"{sheet_name}!N{row}",
         ]
         batch_result = (
             service.spreadsheets()
@@ -202,7 +169,7 @@ def update_card_prices(service, row: int, price_info: PriceInfo):
 
         data = [
             {
-                "range": f"{SHEET_NAME}!J{row}:O{row}",
+                "range": f"{sheet_name}!J{row}:O{row}",
                 "values": [
                     [
                         price_info.current_price,
