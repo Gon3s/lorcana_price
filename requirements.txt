@@ -7,3 +7,4 @@ pydantic==2.10.6
 seleniumbase==4.22.3
 beautifulsoup4==4.12.2
 pytz==2024.2
+thefuzz==0.22.1

@@ -44,6 +44,7 @@ Le Google Sheet doit contenir les colonnes suivantes :
 - Available Items : Nombre d'articles disponibles
 - Min Price : Prix minimum observé
 - Last Update : Date de dernière mise à jour
+- Vinted Min Price : Prix minimum sur Vinted
 
 ## Utilisation
 
@@ -56,15 +57,22 @@ python src/main.py [options]
 - `-s`, `--sheet-name` : Nom de l'onglet dans le Google Sheet (défaut: data)
 - `-r`, `--retries` : Nombre maximum de tentatives par carte (défaut: 3)
 - `-d`, `--delay` : Délai entre les tentatives en secondes (défaut: 2)
+- `--sources` : Sources de prix à vérifier (cardmarket, vinted, all) (défaut: all)
 
 ### Exemples
 
 ```bash
-# Utilisation avec les valeurs par défaut
+# Utilisation avec les valeurs par défaut (toutes les sources)
 python src/main.py
 
-# Spécifier un autre onglet
-python src/main.py --sheet-name "prix"
+# Uniquement les prix Cardmarket
+python src.main.py --sources cardmarket
+
+# Uniquement les prix Vinted
+python src/main.py --sources vinted
+
+# Spécifier un autre onglet et les sources
+python src/main.py --sheet-name "prix" --sources all
 
 # Augmenter le nombre de tentatives et le délai
 python src/main.py --retries 5 --delay 3

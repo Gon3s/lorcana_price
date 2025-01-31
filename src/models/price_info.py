@@ -16,3 +16,11 @@ class PriceInfo(BaseModel):
 
     class Config:
         from_attributes = True
+
+class VintedPriceInfo(BaseModel):
+    min_price: float = Field(description="Prix minimum trouvé")
+    last_update: datetime = Field(description="Date de la dernière mise à jour")
+    url: str | None = None  # Ajout du champ URL optionnel
+
+    class Config:
+        from_attributes = True

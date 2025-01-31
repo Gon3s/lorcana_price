@@ -3,7 +3,9 @@ from bs4 import BeautifulSoup
 from models.price_info import PriceInfo
 from typing import Optional
 from datetime import datetime
+from utils.logger import setup_logger
 
+logger = setup_logger(__name__)
 
 def parse_price_info(html_content: str) -> Optional[PriceInfo]:
     """Parse les informations de prix depuis le HTML de la page"""
@@ -52,7 +54,7 @@ def parse_price_info(html_content: str) -> Optional[PriceInfo]:
             }
         )
     except Exception as e:
-        print(f"Error parsing price info: {str(e)}")
+        logger.error(f"Error parsing price info: {str(e)}")
         return None
 
 
@@ -71,5 +73,5 @@ def get_cardmarket_price(card_url: str) -> Optional[PriceInfo]:
             return parse_price_info(page_content)
 
         except Exception as e:
-            print(f"Error getting price from Cardmarket: {str(e)}")
+            logger.error(f"Error getting price from Cardmarket: {str(e)}")
             return None
