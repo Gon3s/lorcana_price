@@ -62,8 +62,7 @@ def get_cardmarket_price(card_url: str) -> Optional[PriceInfo]:
     """Récupère les informations de prix d'une carte sur Cardmarket"""
     with SB(uc=True, headless=True) as sb:
         try:
-            full_url = f"https://www.cardmarket.com{card_url}"
-            sb.open(full_url)
+            sb.open(card_url)
 
             # Attendre que les infos soient chargées
             sb.wait_for_element("div.info-list-container", timeout=10)

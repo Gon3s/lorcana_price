@@ -30,7 +30,13 @@ def parse_vinted_listings(
             if not link:
                 continue
 
-            title = link.get("title", "")
+            # Nettoyer le titre en ne gardant que la partie avant ", marque"
+            full_title = link.get("title", "")
+            title = (
+                full_title.split(", marque")[0]
+                if ", marque" in full_title
+                else full_title
+            )
             logger.debug(f"Analyse de l'annonce : {title}")
 
             # Utiliser le nouveau système de correspondance
@@ -39,28 +45,24 @@ def parse_vinted_listings(
                 continue
 
             # Si le titre correspond, chercher le prix
-            price_elem = item.find("div", class_="title-content")
-            if price_elem:
+            price_text = item.find(
+                "p",
+                class_="web_ui__Text__text web_ui__Text__subtitle web_ui__Text__left web_ui__Text__clickable web_ui__Text__underline-none",
+            )
+            if price_text:
                 try:
-                    price_text = price_elem.find(
-                        "p",
-                        {"data-testid": lambda x: x and x.endswith("--price-text")},
+                    price = float(
+                        price_text.text.strip().replace("€", "").replace(",", ".")
                     )
-                    if price_text:
-                        price = float(
-                            price_text.text.strip().replace("€", "").replace(",", ".")
-                        )
-                        logger.info(
-                            f"Premier prix valide trouvé pour '{title}' : {price}€"
-                        )
+                    logger.info(f"Premier prix valide trouvé pour '{title}' : {price}€")
 
-                        paris_tz = pytz.timezone("Europe/Paris")
-                        current_time = datetime.now(paris_tz)
-                        item_url = link.get("href", "")
+                    paris_tz = pytz.timezone("Europe/Paris")
+                    current_time = datetime.now(paris_tz)
+                    item_url = link.get("href", "")
 
-                        return VintedPriceInfo(
-                            min_price=price, last_update=current_time, url=item_url
-                        )
+                    return VintedPriceInfo(
+                        min_price=price, last_update=current_time, url=item_url
+                    )
                 except ValueError:
                     continue
 
@@ -74,7 +76,7 @@ def parse_vinted_listings(
 
 def get_vinted_prices(card_name: str) -> Optional[VintedPriceInfo]:
     """Récupère les prix d'une carte sur Vinted"""
-    search_url = f"https://www.vinted.fr/catalog?search_text=Lorcana+{card_name.replace(' ', '+')}&order=price_low_to_high&page=1"
+    search_url = f"https://www.vinted.fr/catalog?search_text=Lorcana+{card_name.replace(' ', '+')}&order=price_low_to_high&page=1&price_from=2"
     logger.debug(f"URL de recherche : {search_url}")
 
     with SB(uc=True, headless=True) as sb:

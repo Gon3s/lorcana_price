@@ -1,15 +1,32 @@
 import unicodedata
 import re
-from typing import List
 from thefuzz import fuzz
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+# Liste de mots à ignorer
+STOP_WORDS = {
+    "le",
+    "la",
+    "les",
+    "de",
+    "du",
+    "des",
+    "un",
+    "une",
+    "et",
+    "ou",
+    "en",
+    "lorcana",
+    "achat",
+    "carte",
+}
 
 def normalize_text(text: str) -> str:
     """
-    Normalise un texte en retirant les accents, la ponctuation et en mettant en minuscule
+    Normalise un texte en retirant les accents, la ponctuation,
+    les mots vides et retourne les mots-clés importants
     """
     # Convertir en minuscules
     text = text.lower()
@@ -23,19 +40,10 @@ def normalize_text(text: str) -> str:
     # Remplacer les espaces multiples par un seul espace
     text = re.sub(r"\s+", " ", text)
 
-    return text.strip()
+    # Filtrer les mots vides
+    words = [w for w in text.split() if w not in STOP_WORDS]
 
-
-def extract_keywords(text: str) -> List[str]:
-    """
-    Extrait les mots-clés importants d'un texte
-    """
-    # Liste de mots à ignorer
-    stop_words = {"le", "la", "les", "de", "du", "des", "un", "une", "et", "ou", "en"}
-
-    words = normalize_text(text).split()
-    return [w for w in words if w not in stop_words]
-
+    return " ".join(words)
 
 def is_title_match(card_name: str, title: str, threshold: int = 80) -> bool:
     """
@@ -63,8 +71,8 @@ def is_title_match(card_name: str, title: str, threshold: int = 80) -> bool:
         return True
 
     # Vérification par mots-clés
-    card_keywords = set(extract_keywords(card_name))
-    title_keywords = set(extract_keywords(title))
+    card_keywords = set(norm_card_name.split())
+    title_keywords = set(norm_title.split())
     common_keywords = card_keywords & title_keywords
 
     if (

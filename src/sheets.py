@@ -1,7 +1,7 @@
 from datetime import datetime
 import pytz
 from typing import List
-from dataclasses import dataclass
+from pydantic import BaseModel
 from googleapiclient.discovery import build
 from google.oauth2 import service_account
 from urllib.parse import urlparse
@@ -11,19 +11,10 @@ from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-# Constantes pour les colonnes et l'API
-RANGE = "A2:R"  # Mise à jour pour inclure la colonne Vinted URL
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
 # Indices des colonnes dans le Google Sheet
-COL_NAME_EN = 0
 COL_NAME_FR = 1
-COL_SET = 2
-COL_NUMBER = 3
-COL_COLOR = 4
-COL_RARITY = 5
-COL_PRICE = 6
-COL_FOIL_PRICE = 7
 COL_CARDMARKET_URL = 8
 COL_CURRENT_PRICE = 9
 COL_TREND_PRICE = 10
@@ -35,17 +26,12 @@ COL_VINTED_MIN = 15
 COL_VINTED_LAST_UPDATE = 16
 COL_VINTED_URL = 17  # Nouvelle colonne
 
-# Définition des colonnes
-COLUMN_NAME_FR = "B"
-COLUMN_CARDMARKET_URL = "D"
 
-
-@dataclass
-class CardToTrack:
+class CardToTrack(BaseModel):
     """Représente une carte à suivre"""
-
     name_fr: str
     cardmarket_url: str | None
+    row: int  # Ajout de l'attribut row
 
 
 def get_google_sheets_service(credentials_file: str):
@@ -66,8 +52,10 @@ def get_sheet_id(sheets_url: str) -> str:
 def get_cards_to_track(service, sheet_id: str, sheet_name: str) -> List[CardToTrack]:
     """Récupère la liste des cartes à suivre depuis Google Sheets"""
     try:
-        # Lecture des données
-        range_name = f"{sheet_name}!B2:D"  # De B2 à D pour nom_fr et cardmarket_url
+        range_name = (
+            f"{sheet_name}!{chr(65 + COL_NAME_FR)}2:{chr(65 + COL_CARDMARKET_URL)}"
+        )
+
         result = (
             service.spreadsheets()
             .values()
@@ -77,20 +65,34 @@ def get_cards_to_track(service, sheet_id: str, sheet_name: str) -> List[CardToTr
         values = result.get("values", [])
 
         cards = []
-        for row in values:
-            # Vérifier si la ligne a suffisamment de colonnes
-            name_fr = row[0] if len(row) > 0 else None
-            cardmarket_url = row[2] if len(row) > 2 else None
+        for i, row in enumerate(
+            values, start=2
+        ):  # start=2 car les données commencent à la ligne 2
+            if not row:  # Ignorer les lignes vides
+                continue
+
+            # S'assurer que nous avons assez de colonnes
+            while len(row) <= COL_CARDMARKET_URL - COL_NAME_FR:
+                row.append(None)
+
+            name_fr = row[0]
+            cardmarket_url = row[COL_CARDMARKET_URL - COL_NAME_FR]
 
             if name_fr:  # Ne traiter que les lignes avec un nom
                 cards.append(
-                    CardToTrack(name_fr=name_fr, cardmarket_url=cardmarket_url)
+                    CardToTrack(
+                        name_fr=name_fr,
+                        cardmarket_url=cardmarket_url if cardmarket_url else None,
+                        row=i,  # Ajout du numéro de ligne
+                    )
                 )
 
         return cards
 
     except Exception as e:
+        logger.error(f"Erreur détaillée lors de la récupération des cartes: {str(e)}")
         raise Exception(f"Erreur lors de la récupération des cartes: {str(e)}")
+
 
 def update_card_prices(
     service, sheet_id: str, sheet_name: str, row: int, price_info: PriceInfo
@@ -98,7 +100,7 @@ def update_card_prices(
     """Met à jour les prix Cardmarket pour une carte"""
     try:
         ranges = [
-            f"{sheet_name}!N{row}",
+            f"{sheet_name}!{chr(65 + COL_MIN_PRICE)}{row}",
         ]
         batch_result = (
             service.spreadsheets()
@@ -128,7 +130,7 @@ def update_card_prices(
 
         data = [
             {
-                "range": f"{sheet_name}!J{row}:O{row}",
+                "range": f"{sheet_name}!{chr(65 + COL_CURRENT_PRICE)}{row}:{chr(65 + COL_LAST_UPDATE)}{row}",
                 "values": [
                     [
                         price_info.current_price,
@@ -158,7 +160,7 @@ def update_vinted_price(
     """Met à jour le prix minimum Vinted et la date pour une carte"""
     try:
         ranges = [
-            f"{sheet_name}!P{row}",
+            f"{sheet_name}!{chr(65 + COL_VINTED_MIN)}{row}",
         ]
         batch_result = (
             service.spreadsheets()
@@ -191,7 +193,7 @@ def update_vinted_price(
 
         data = [
             {
-                "range": f"{sheet_name}!P{row}:R{row}",  # Mise à jour pour inclure l'URL
+                "range": f"{sheet_name}!{chr(65 + COL_VINTED_MIN)}{row}:{chr(65 + COL_VINTED_URL)}{row}",
                 "values": [[new_min, current_time, price_info.url]],
             }
         ]

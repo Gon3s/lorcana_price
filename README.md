@@ -5,9 +5,11 @@ Un outil pour suivre les prix des cartes Lorcana sur différentes plateformes.
 ## Configuration
 
 ### Prérequis
+
 - Python 3.10+
 - Un compte Google Cloud Platform
 - Une feuille Google Sheets contenant la liste des cartes
+- Un navigateur Chrome installé (pour le scraping)
 
 ### Installation
 
@@ -28,6 +30,7 @@ pip install -r requirements.txt
 - Configurer les variables d'environnement
 
 ### Structure du Google Sheet
+
 Le Google Sheet doit contenir les colonnes suivantes :
 - Name (EN) : Nom de la carte en anglais
 - Name (FR) : Nom de la carte en français
@@ -45,6 +48,8 @@ Le Google Sheet doit contenir les colonnes suivantes :
 - Min Price : Prix minimum observé
 - Last Update : Date de dernière mise à jour
 - Vinted Min Price : Prix minimum sur Vinted
+- Vinted Last Update : Date de dernière mise à jour Vinted
+- Vinted URL : URL de l'annonce au meilleur prix sur Vinted
 
 ## Utilisation
 
@@ -83,11 +88,12 @@ python src/main.py --retries 5 --delay 3
 - [x] Documentation détaillée
 - [x] Lecture des données depuis Google Sheets
 - [x] Scraping des prix Cardmarket
+- [x] Scraping des prix Vinted
 - [x] Suivi historique des prix
-  - Enregistrement du prix minimum observé
-  - Date de dernière mise à jour des prix
-  - Mise à jour uniquement si le nouveau prix est inférieur
+    - Enregistrement du prix minimum observé
+    - Date de dernière mise à jour des prix
+    - Mise à jour uniquement si le nouveau prix est inférieur
+    - Stockage des URLs Vinted
 - [ ] Scraping des prix Ebay
 - [ ] Scraping des prix Leboncoin
-- [ ] Scraping des prix Vinted
 - [ ] Système d'alertes de prix

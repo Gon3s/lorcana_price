@@ -9,13 +9,13 @@
     - Ajouter colonne prix minimum
     - Ajouter colonne date de dernière mise à jour
     - Mettre à jour uniquement si prix inférieur
-* [NEXT] Implémentation du scraping :
+* [DONE] Implémentation du scraping :
     - [DONE] Récupérer le prix Vinted
     - [ ] Récupérer le prix Ebay
     - [ ] Récupérer le prix Leboncoin
 * [ ] Système d'alertes de prix
 
 ## Notes d'implémentation
-- Vinted : prix minimum uniquement
+- Vinted : implémenté avec suivi des URLs
 - Ebay : à implémenter
 - Leboncoin : à implémenter
