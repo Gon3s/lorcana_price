@@ -14,8 +14,3 @@
     - [ ] Récupérer le prix Ebay
     - [ ] Récupérer le prix Leboncoin
 * [ ] Système d'alertes de prix
-
-## Notes d'implémentation
-- Vinted : implémenté avec suivi des URLs
-- Ebay : à implémenter
-- Leboncoin : à implémenter

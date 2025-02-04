@@ -49,7 +49,7 @@ def parse_price_info(html_content: str) -> Optional[PriceInfo]:
                 "trend_price": trend_price,
                 "avg_30_days": avg_30_days,
                 "available_items": available_items,
-                "min_price": current_price,  # Initialisation du prix minimum
+                "min_price": current_price,
                 "last_update": datetime.now(),
             }
         )
