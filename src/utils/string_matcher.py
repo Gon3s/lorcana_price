@@ -59,13 +59,14 @@ def is_title_match(card_name: str, title: str, threshold: int = 80) -> bool:
 
     # Vérification exacte après normalisation
     if norm_card_name in norm_title:
-        logger.debug(f"Correspondance exacte trouvée: '{card_name}' dans '{title}'")
+        logger.info(f"Correspondance exacte trouvée: '{card_name}' dans '{title}'")
         return True
 
     # Vérification par ratio de similarité
     ratio = fuzz.partial_ratio(norm_card_name, norm_title)
+    logger.debug(f"Ratio de similarité: {ratio}%")
     if ratio >= threshold:
-        logger.debug(
+        logger.info(
             f"Correspondance approximative ({ratio}%): '{card_name}' ~ '{title}'"
         )
         return True
@@ -75,6 +76,7 @@ def is_title_match(card_name: str, title: str, threshold: int = 80) -> bool:
     title_keywords = set(norm_title.split())
     common_keywords = card_keywords & title_keywords
 
+    logger.debug(f"Mots-clés communs: {len(common_keywords)}>{len(card_keywords)*0.8}")
     if (
         len(common_keywords) >= len(card_keywords) * 0.8
     ):  # 80% des mots-clés doivent correspondre

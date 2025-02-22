@@ -36,10 +36,12 @@ venv/
 .venv/
 
 # Logs
-*.log
+logs/
 
 # Tests
 .pytest_cache/
 
 # Other
 downloaded_files/
+
+run.sh

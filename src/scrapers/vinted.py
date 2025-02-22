@@ -21,7 +21,7 @@ def parse_vinted_listings(
         for item in soup.find_all("div", class_="feed-grid__item"):
             # Ignorer les éléments avec la classe feed-grid__item--full-row
             if "feed-grid__item--full-row" in item.get("class", []):
-                logger.debug("Ignorer l'élément full-row (probablement une publicité)")
+                logger.info("Ignorer l'élément full-row (probablement une publicité)")
                 continue
 
             link = item.find(
@@ -41,20 +41,21 @@ def parse_vinted_listings(
 
             # Utiliser le nouveau système de correspondance
             if not is_title_match(card_name, title):
-                logger.debug(f"Titre non correspondant ignoré : {title}")
+                logger.info(f"Titre non correspondant ignoré : {title}")
                 continue
 
             # Si le titre correspond, chercher le prix
             price_text = item.find(
-                "p",
+                "span",
                 class_="web_ui__Text__text web_ui__Text__subtitle web_ui__Text__left web_ui__Text__clickable web_ui__Text__underline-none",
             )
+            logger.debug(f"Prix trouvé : {price_text}")
             if price_text:
                 try:
                     price = float(
                         price_text.text.strip().replace("€", "").replace(",", ".")
                     )
-                    logger.info(f"Premier prix valide trouvé pour '{title}' : {price}€")
+                    logger.debug(f"Premier prix valide trouvé pour '{title}' : {price}€")
 
                     paris_tz = pytz.timezone("Europe/Paris")
                     current_time = datetime.now(paris_tz)
@@ -64,9 +65,10 @@ def parse_vinted_listings(
                         min_price=price, last_update=current_time, url=item_url
                     )
                 except ValueError:
+                    logger.error(f"Impossible de convertir le prix en float : {price_text.text}")
                     continue
 
-        logger.info(f"Aucun prix trouvé sur Vinted pour la carte '{card_name}'")
+        logger.debug(f"Aucun prix trouvé sur Vinted pour la carte '{card_name}'")
         return None
 
     except Exception as e:
