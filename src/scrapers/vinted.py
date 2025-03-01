@@ -78,13 +78,13 @@ def parse_vinted_listings(
 
 def get_vinted_prices(card_name: str) -> Optional[VintedPriceInfo]:
     """Récupère les prix d'une carte sur Vinted"""
-    search_url = f"https://www.vinted.fr/catalog?search_text=Lorcana+{card_name.replace(' ', '+')}&order=price_low_to_high&page=1&price_from=2"
+    search_url = f"https://www.vinted.fr/catalog?search_text=Lorcana+{card_name.replace(' ', '+')}&order=price_low_to_high&page=1&price_from=2&catalog[]=3224"
     logger.debug(f"URL de recherche : {search_url}")
 
     with SB(uc=True, headless=True) as sb:
         try:
             sb.open(search_url)
-            sb.wait_for_element("div.feed-grid", timeout=5)
+            sb.wait_for_element("div.feed-grid", timeout=10)
             page_content = sb.get_page_source()
             return parse_vinted_listings(page_content, card_name)
 
