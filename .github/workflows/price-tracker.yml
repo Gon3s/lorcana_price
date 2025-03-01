@@ -1,10 +1,9 @@
 name: Price Tracker Cron
 
 on:
-#   schedule:
-#     # Exécution toutes les 6 heures
-#     - cron: '0 7,12,17,21 * * *'
-  workflow_dispatch:  # Permet l'exécution manuelle
+  schedule:
+    - cron: '0 7,12,17,21 * * *'
+  workflow_dispatch:  
 
 jobs:
   track-prices:
@@ -15,7 +14,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
           cache: 'pip'
 
       - name: Install uv
@@ -50,7 +49,7 @@ jobs:
           echo "MIN_PRICE_DIFF_PERCENT=${{ secrets.MIN_PRICE_DIFF_PERCENT }}" >> .env
 
       - name: Run price tracker
-        run: uv run src/main.py --sheet-name test
+        run: uv run src/main.py
 
       - name: Cleanup sensitive files
         if: always()
