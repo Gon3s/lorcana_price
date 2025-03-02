@@ -73,4 +73,5 @@ def get_cardmarket_price(card_url: str) -> Optional[PriceInfo]:
 
         except Exception as e:
             logger.error(f"Error getting price from Cardmarket: {str(e)}")
+            logger.error(sb.get_page_source())
             return None
