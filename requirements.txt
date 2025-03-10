@@ -1,4 +1,4 @@
-ruff==0.9.7
+ruff==0.9.10
 python-dotenv==1.0.1
 google-api-python-client==2.162.0
 google-auth-oauthlib==1.2.1
