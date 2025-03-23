@@ -29,6 +29,9 @@ class PriceInfo(BasePriceInfo):
 
 class VintedPriceInfo(BasePriceInfo):
     url: str = Field(description="URL de l'annonce")
+    urlSearch: str = Field(
+        description="URL de la recherche sur Vinted",
+    )
 
     class Config:
         from_attributes = True

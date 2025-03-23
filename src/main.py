@@ -34,12 +34,18 @@ def process_card(card, service, sheet_id, sheet_name, sources):
 
     if "vinted" in sources:
         vinted_price_info = get_vinted_prices(card.name_fr)
-        if (
-            vinted_price_info and latest_cardmarket_price
-        ):  # Vérifie qu'on a un prix Cardmarket
-            update_vinted_price(
-                service, sheet_id, sheet_name, card.row, vinted_price_info
+        if vinted_price_info:
+            # Si on n'a pas de prix Cardmarket, on met quand même à jour Vinted
+            logger.warning(
+                f"Pas de prix Cardmarket disponible pour {card.name_fr}, impossible de comparer"
             )
+
+        old_vinted_url = card.vinted_url if hasattr(card, "vinted_url") else None
+
+        update_vinted_price(service, sheet_id, sheet_name, card.row, vinted_price_info)
+
+        if vinted_price_info and latest_cardmarket_price:
+            # Vérifie qu'on a un prix Cardmarket
             vinted_price = vinted_price_info.min_price
             price_diff = latest_cardmarket_price - vinted_price
 
@@ -48,6 +54,7 @@ def process_card(card, service, sheet_id, sheet_name, sources):
                 price_diff > 0
                 and (price_diff / latest_cardmarket_price * 100)
                 >= settings.min_price_diff_percent
+                and old_vinted_url != vinted_price_info.url
             ):
                 send_price_alert(
                     card_name=card.name_fr,
@@ -56,14 +63,6 @@ def process_card(card, service, sheet_id, sheet_name, sources):
                     vinted_url=vinted_price_info.url,
                     difference=price_diff,
                 )
-        elif vinted_price_info:
-            # Si on n'a pas de prix Cardmarket, on met quand même à jour Vinted
-            update_vinted_price(
-                service, sheet_id, sheet_name, card.row, vinted_price_info
-            )
-            logger.warning(
-                f"Pas de prix Cardmarket disponible pour {card.name_fr}, impossible de comparer"
-            )
 
 def track_prices(sheets_url: str, sheet_name: str, sources: list[str]):
     try:

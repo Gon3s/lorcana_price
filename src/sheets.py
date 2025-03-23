@@ -176,8 +176,15 @@ def update_vinted_price(
 
         data = [
             {
-                "range": f"{sheet_name}!P{row}:R{row}",
-                "values": [[price_info.min_price, current_time, price_info.url]],
+                "range": f"{sheet_name}!P{row}:S{row}",
+                "values": [
+                    [
+                        price_info.min_price,
+                        current_time,
+                        price_info.url,
+                        price_info.urlSearch,
+                    ]
+                ],
             }
         ]
 

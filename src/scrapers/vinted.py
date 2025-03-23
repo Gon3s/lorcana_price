@@ -86,8 +86,10 @@ def get_vinted_prices(card_name: str) -> Optional[VintedPriceInfo]:
             sb.open(search_url)
             sb.wait_for_element("div.feed-grid", timeout=10)
             page_content = sb.get_page_source()
-            return parse_vinted_listings(page_content, card_name)
 
+            vintedPriceInfo = parse_vinted_listings(page_content, card_name)
+            vintedPriceInfo.urlSearch = search_url
+            return vintedPriceInfo
         except Exception as e:
             logger.error(f"Error getting prices from Vinted: {str(e)}")
             return None
