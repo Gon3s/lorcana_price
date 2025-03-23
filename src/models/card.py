@@ -9,4 +9,5 @@ class Card(BaseModel):
     name_fr: str
     cardmarket_url: Optional[str]
     current_price: Optional[float]
+    vinted_url: Optional[str] = None
     row: int

@@ -34,13 +34,14 @@ def process_card(card, service, sheet_id, sheet_name, sources):
 
     if "vinted" in sources:
         vinted_price_info = get_vinted_prices(card.name_fr)
-        if vinted_price_info:
-            # Si on n'a pas de prix Cardmarket, on met quand même à jour Vinted
+        if not vinted_price_info:
+            # Si on n'a pas de prix Vinted, on ne peut pas mettre à jour
             logger.warning(
-                f"Pas de prix Cardmarket disponible pour {card.name_fr}, impossible de comparer"
+                f"Pas de prix Vinted disponible pour {card.name_fr}, impossible de mettre à jour"
             )
+            return
 
-        old_vinted_url = card.vinted_url if hasattr(card, "vinted_url") else None
+        old_vinted_url = card.vinted_url
 
         update_vinted_price(service, sheet_id, sheet_name, card.row, vinted_price_info)
 
@@ -54,7 +55,7 @@ def process_card(card, service, sheet_id, sheet_name, sources):
                 price_diff > 0
                 and (price_diff / latest_cardmarket_price * 100)
                 >= settings.min_price_diff_percent
-                and old_vinted_url != vinted_price_info.url
+                and old_vinted_url != vinted_price_info.urlSearch
             ):
                 send_price_alert(
                     card_name=card.name_fr,

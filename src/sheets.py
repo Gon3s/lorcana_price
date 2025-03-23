@@ -27,6 +27,7 @@ COL_LAST_UPDATE = 14  # O - Dernière MAJ
 COL_VINTED_MIN = 15  # P - Prix Vinted
 COL_VINTED_LAST_UPDATE = 16  # Q - Dernière MAJ Vinted
 COL_VINTED_URL = 17  # R - URL Vinted
+COL_VINTED_URL_SEARCH = 18  # S - URL de recherche Vinted
 
 
 class CardToTrack(BaseModel):
@@ -59,7 +60,7 @@ def get_cards_to_track(service, sheet_id: str, sheet_name: str) -> List[Card]:
             .values()
             .get(
                 spreadsheetId=sheet_id,
-                range=f"{sheet_name}!A2:N",
+                range=f"{sheet_name}!A2:S",
             )
             .execute()
         )
@@ -89,10 +90,9 @@ def get_cards_to_track(service, sheet_id: str, sheet_name: str) -> List[Card]:
             card = Card(
                 name_en=row[COL_NAME_EN],
                 name_fr=row[COL_NAME_FR],
-                cardmarket_url=row[COL_CARDMARKET_URL]
-                if len(row) > COL_CARDMARKET_URL
-                else None,
+                cardmarket_url=row[COL_CARDMARKET_URL],
                 current_price=current_price,
+                vinted_url=row[COL_VINTED_URL_SEARCH],
                 row=i,
             )
             cards.append(card)
