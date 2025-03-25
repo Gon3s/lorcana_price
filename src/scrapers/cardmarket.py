@@ -65,7 +65,7 @@ def get_cardmarket_price(card_url: str) -> Optional[PriceInfo]:
             sb.open(card_url)
 
             # Attendre que les infos soient chargées
-            sb.wait_for_element("div.info-list-container", timeout=10)
+            sb.wait_for_element("#mainContent", timeout=10)
 
             # Récupérer le contenu HTML et le parser
             page_content = sb.get_page_source()

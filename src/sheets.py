@@ -69,9 +69,6 @@ def get_cards_to_track(service, sheet_id: str, sheet_name: str) -> List[Card]:
         cards = []
 
         for i, row in enumerate(rows, start=2):
-            # Étendre row avec des valeurs vides si nécessaire
-            row.extend([""] * (14 - len(row)))
-
             # Conversion du prix avec gestion des erreurs
             try:
                 current_price = (
@@ -92,7 +89,9 @@ def get_cards_to_track(service, sheet_id: str, sheet_name: str) -> List[Card]:
                 name_fr=row[COL_NAME_FR],
                 cardmarket_url=row[COL_CARDMARKET_URL],
                 current_price=current_price,
-                vinted_url=row[COL_VINTED_URL_SEARCH],
+                vinted_url=row[COL_VINTED_URL_SEARCH]
+                if len(row) > COL_VINTED_URL_SEARCH
+                else None,
                 row=i,
             )
             cards.append(card)
