@@ -55,7 +55,7 @@ def process_card(card, service, sheet_id, sheet_name, sources):
                 price_diff > 0
                 and (price_diff / latest_cardmarket_price * 100)
                 >= settings.min_price_diff_percent
-                and old_vinted_url != vinted_price_info.urlSearch
+                and old_vinted_url != vinted_price_info.url
             ):
                 send_price_alert(
                     card_name=card.name_fr,

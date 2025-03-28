@@ -89,8 +89,8 @@ def get_cards_to_track(service, sheet_id: str, sheet_name: str) -> List[Card]:
                 name_fr=row[COL_NAME_FR],
                 cardmarket_url=row[COL_CARDMARKET_URL],
                 current_price=current_price,
-                vinted_url=row[COL_VINTED_URL_SEARCH]
-                if len(row) > COL_VINTED_URL_SEARCH
+                vinted_url=row[COL_VINTED_URL]
+                if len(row) > COL_VINTED_URL
                 else None,
                 row=i,
             )
