@@ -7,5 +7,5 @@ pydantic==2.10.6
 pydantic-settings==2.8.0
 seleniumbase==4.35.2
 beautifulsoup4==4.13.3
-pytz==2025.1
+pytz==2025.2
 thefuzz==0.22.1
