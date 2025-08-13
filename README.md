@@ -94,6 +94,7 @@ python src/main.py --retries 5 --delay 3
     - Date de dernière mise à jour des prix
     - Mise à jour uniquement si le nouveau prix est inférieur
     - Stockage des URLs Vinted
+    - Enregistrement de chaque vérification de prix Cardmarket dans un onglet 'Historique' dédié.
 - [ ] Scraping des prix Ebay
 - [ ] Scraping des prix Leboncoin
 - [ ] Système d'alertes de prix

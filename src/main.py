@@ -8,6 +8,7 @@ from sheets import (
     get_sheet_id,
     update_card_prices,
     update_vinted_price,
+    log_price_history,
 )
 from utils.logger import setup_logger
 from config import get_settings
@@ -29,6 +30,14 @@ def process_card(card, service, sheet_id, sheet_name, sources):
         if cardmarket_price_info:
             update_card_prices(
                 service, sheet_id, sheet_name, card.row, cardmarket_price_info
+            )
+            log_price_history(
+                service,
+                sheet_id,
+                settings.history_sheet_name,
+                card.name_fr,
+                cardmarket_price_info.current_price,
+                "Cardmarket",
             )
             latest_cardmarket_price = cardmarket_price_info.current_price
 
