@@ -195,3 +195,42 @@ def update_vinted_price(
 
     except Exception as e:
         logger.error(f"Erreur lors de la mise à jour du prix Vinted dans le sheet: {e}")
+
+
+def log_price_history(
+    service,
+    sheet_id: str,
+    history_sheet_name: str,
+    card_name: str,
+    price: float,
+    source: str,
+):
+    """Enregistre une entrée de prix dans l'onglet d'historique."""
+    try:
+        paris_tz = pytz.timezone("Europe/Paris")
+        current_time = datetime.now(paris_tz).strftime("%d/%m/%Y %H:%M:%S")
+
+        row_to_append = [
+            card_name,
+            current_time,
+            price,
+            source,
+        ]
+
+        body = {"values": [row_to_append]}
+
+        service.spreadsheets().values().append(
+            spreadsheetId=sheet_id,
+            range=f"{history_sheet_name}!A1",
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body=body,
+        ).execute()
+        logger.info(
+            f"Historique de prix pour '{card_name}' enregistré : {price}€ ({source})"
+        )
+
+    except Exception as e:
+        logger.error(
+            f"Erreur lors de l'enregistrement de l'historique pour '{card_name}': {e}"
+        )

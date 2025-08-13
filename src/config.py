@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     google_sheets_url: str
     google_sheets_credentials_file: str = "service-account.json"
     sheet_name: str = "data"
+    history_sheet_name: str = "Historique"
     log_level: str = "DEBUG"
 
     # SMTP Configuration
